@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pds-analysis"
+version = "0.1.0"
+description = "DAPHNE DAQ waveform checks and PDS calibration analysis"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.scripts]
+pds-analyse = "pds_analysis.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pds_analysis = ["*.in"]
