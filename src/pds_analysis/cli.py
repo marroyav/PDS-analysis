@@ -20,6 +20,10 @@ def main():
     d = sub.add_parser('decode', help='Decode extracted DAQ frames; hardware identity remains external metadata')
     d.add_argument('input', type=Path)
     d.add_argument('output', type=Path)
+    i = sub.add_parser('import-scan', help='Read existing step JSON or completed steps from a JSONL journal')
+    i.add_argument('input', type=Path)
+    i.add_argument('output', type=Path)
+    i.add_argument('--data-dir', type=Path, help='Location of extracted .bin files if moved from CERN')
     f = sub.add_parser('fingerplot', help='Export baseline-subtracted charges and a histogram')
     f.add_argument('input', type=Path)
     f.add_argument('--channel', type=int, required=True)
@@ -30,6 +34,10 @@ def main():
     f.add_argument('--count', type=int, default=10000)
     f.add_argument('--output', type=Path, required=True)
     args = p.parse_args()
+    if args.action == 'import-scan':
+        from .scan import import_scan
+        print(f'Imported {import_scan(args.input, args.output, args.data_dir)} completed steps')
+        return
     if args.action == 'decode':
         if args.output.suffix != '.npz':
             raise ValueError('Decoded output must use .npz extension')
@@ -40,6 +48,7 @@ def main():
     if args.count <= 0:
         p.error('Count must be positive')
     with np.load(args.input, allow_pickle=False) as data:
+        receipt = json.loads(str(data['receipt'])) if 'receipt' in data else None
         a, channels, ticks = data['adc'], data['channels'], data['timestamps']
         if a.ndim == 3:  # campaign export: event x channel x sample
             idx = np.flatnonzero(channels == args.channel)
@@ -72,6 +81,7 @@ def main():
         baseline_population_rms=float(values['baseline'].std()),
         mean_waveform_baseline_rms=float(values['baseline_rms'].mean()),
         clipped_waveform_fraction=float(values['clipped'].mean()),
+        scan_receipt=receipt,
         qualification='Histogram prepared; no SPE fit or sweet spot claimed')
     (args.output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps(report, indent=2))

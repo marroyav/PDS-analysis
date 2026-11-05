@@ -12,6 +12,22 @@ export PYTHONPATH="$PWD/src:$PYTHONPATH"
 python3 -m unittest discover -s tests -v
 ```
 
+## Import the existing scan metadata
+
+Read a scan wrapper JSONL journal, or one `step-*.json` receipt:
+
+```bash
+python3 -m pds_analysis.cli import-scan scan.jsonl results/imported
+```
+
+Only `step_complete` events are imported from a journal. The importer checks the
+extracted `.bin` hash, frame geometry, tags, per-channel counts and common events.
+It preserves the original receipt, including settings, LED configuration and
+HDF5 provenance, beside and inside each decoded NPZ. Use `--data-dir` if the
+extracted files moved from their recorded location. It reuses the wrapper's
+HDF5 selection; it does not read raw HDF5 files itself. The analysis report and
+fitting provenance retain this receipt. No new acquisition logging is introduced.
+
 ## Prepare a fingerplot
 
 First extract accepted, deduplicated frames from stable DAQ intervals. Check
@@ -70,7 +86,7 @@ the full upstream class integration is not yet qualified. Its November 2025
 
 The scope excludes undershoot correction, deconvolution and pulse-tail recovery.
 Raw data and generated results stay outside Git. references.json pins upstream
-sources. Six unit tests cover decoding, observables, timing checks and export.
+sources. Nine unit tests cover decoding, observables, timing checks and export.
 The optional `tests/root_smoke.py OUTPUT APC_CHECKOUT` checks fitting with
 synthetic charges. On CERN ROOT 6.38.00 it recovered separation 99.69 for an
 injected 100; this is a software check, not a detector measurement.

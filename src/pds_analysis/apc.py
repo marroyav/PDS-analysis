@@ -40,7 +40,9 @@ def main():
     seeds = ','.join(map(repr, [args.pedestal, args.spe, args.twope]))
     macro = Path(__file__).with_name('fit.C.in').read_text().replace('CHARGE_PATH', path).replace('SEEDS', seeds)
     (args.output/'fit.C').write_text(macro)
-    provenance = dict(upstream='https://github.com/hvsouza/apc_root', commit=commit,
+    report = args.charges.parent/'report.json'
+    scan_receipt = json.loads(report.read_text()).get('scan_receipt') if report.exists() else None
+    provenance = dict(scan_receipt=scan_receipt, upstream='https://github.com/hvsouza/apc_root', commit=commit,
         source=relative, source_sha256=hashlib.sha256(source).hexdigest(),
         charges_sha256=hashlib.sha256(args.charges.read_bytes()).hexdigest(),
         model='MyFunctionObject, n_peaks=1; pedestal + SPE + 2PE; higher peaks excluded from fit range',

@@ -19,6 +19,7 @@ def main():
     args=p.parse_args()
     if args.count<=0:p.error('Count must be positive')
     with np.load(args.input,allow_pickle=False) as data:
+        receipt=json.loads(str(data['receipt'])) if 'receipt' in data else None
         adc,channels,ticks=data['adc'],data['channels'],data['timestamps']
         if adc.ndim==3:
             selected=np.flatnonzero(channels==args.channel)
@@ -39,7 +40,7 @@ def main():
         args.output.mkdir(parents=True,exist_ok=False)
         adc.astype('<f8').tofile(args.output/'waveforms.dat')
         np.savetxt(args.output/'timestamps.txt',ticks,fmt='%d')
-        metadata=dict(upstream='https://github.com/fgalizzi/pds-ana',commit=REFERENCE_COMMIT,
+        metadata=dict(scan_receipt=receipt,upstream='https://github.com/fgalizzi/pds-ana',commit=REFERENCE_COMMIT,
             reader='Header/G_Read.hpp:CompleteWF_Binary',data_format='daphne',
             dtype='little-endian float64, native doubles on the CERN x86 hosts',
             memorydepth=adc.shape[1],n_wf=len(adc),channel=args.channel,
