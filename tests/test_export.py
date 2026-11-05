@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import numpy as np
-from pds_analysis.fgalizzi import main
+from pds_analysis.export import main
 
 
 class ExportTests(unittest.TestCase):

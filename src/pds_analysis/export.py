@@ -1,12 +1,10 @@
-"""Export raw ADC waveforms for pds-ana's CompleteWF_Binary reader."""
+"""Export decoded ADC waveforms as little-endian float64 arrays."""
 import argparse
 import hashlib
 import json
 from pathlib import Path
 import numpy as np
 from .waveforms import timestamp_audit
-
-REFERENCE_COMMIT='2fcabc113e7ca62b98e62c69213f852d143affb2'
 
 
 def main():
@@ -40,14 +38,13 @@ def main():
         args.output.mkdir(parents=True,exist_ok=False)
         adc.astype('<f8').tofile(args.output/'waveforms.dat')
         np.savetxt(args.output/'timestamps.txt',ticks,fmt='%d')
-        metadata=dict(scan_receipt=receipt,upstream='https://github.com/fgalizzi/pds-ana',commit=REFERENCE_COMMIT,
-            reader='Header/G_Read.hpp:CompleteWF_Binary',data_format='daphne',
+        metadata=dict(scan_receipt=receipt,
             dtype='little-endian float64, native doubles on the CERN x86 hosts',
             memorydepth=adc.shape[1],n_wf=len(adc),channel=args.channel,
             raw_ADC=True,baseline_subtracted=False,timestamp_audit=audit,
             input_sha256=hashlib.sha256(args.input.read_bytes()).hexdigest(),
             output_sha256=hashlib.sha256((args.output/'waveforms.dat').read_bytes()).hexdigest(),
-            status='exported; configure pulse window and cuts in pds-ana before analysis')
+            status='raw samples exported; baseline subtraction and integration not applied')
     (args.output/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
     print(json.dumps(metadata,indent=2))
 

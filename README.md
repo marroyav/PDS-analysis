@@ -51,42 +51,32 @@ with channel and timestamp vectors. Output contains charge samples, histogram
 CSV, mean waveform, analysis settings, input hash and quality checks. A prepared
 histogram does not establish a valid SPE fit or LED sweet spot.
 
-## Fit with Henrique Souza's model
+## Fit charge peaks
 
-Keep [hvsouza/apc_root](https://github.com/hvsouza/apc_root) in a separate checkout.
-The adapter uses its pedestal/SPE/2PE model at the revision in references.json.
-Supply initial peak locations in the exported charge units:
+Fit pedestal, SPE and 2PE with three Gaussians. Supply initial charge peak estimates:
 
 ```bash
-python3 -m pds_analysis.apc results/point-001/charges.txt \
-  --apc-root /path/to/apc_root --pedestal 0 --spe 100 --twope 200 \
-  --output results/point-001-fit
+python3 -m pds_analysis.fit results/point-001/charges.txt \
+  --pedestal 0 --spe 100 --twope 200 --output results/point-001-fit
 ```
 
-It saves a PNG, ROOT histogram and fit, fit status and provenance. Invalid fits
-fail. Higher-occupancy spectra may need a wider multi-PE model. This adapter
-uses the upstream model, not its full interactive calibration workflow.
+ROOT writes a PNG, histogram, fit status and parameters. Invalid fits fail.
+Inspect the spectrum before accepting a fit. Higher-occupancy spectra may need
+more peaks; this small fitter covers pedestal/SPE/2PE only.
 
-## Export for Federico Galizzi's analysis
-
-[fgalizzi/pds-ana](https://github.com/fgalizzi/pds-ana) provides LED analysis,
-SNR and noise-spectrum routines. Export decoded raw waveforms for its
-`CompleteWF_Binary` reader:
+## Export samples
 
 ```bash
-python3 -m pds_analysis.fgalizzi decoded.npz --channel 2 --count 10000 \
+python3 -m pds_analysis.export decoded.npz --channel 2 --count 10000 \
   --expected-step 1280 --output results/point-001-export
 ```
 
-Upstream, use `data_format="daphne"`, with `n_wf` and `memorydepth` from the
-exported metadata. Set baseline and integration windows from the actual data.
-The file contains decoded doubles, not DAQ frame bytes. The export is tested;
-the full upstream class integration is not yet qualified. Its November 2025
-1024-sample configurations must not be applied directly to 256-sample frames.
+The export contains raw decoded float64 samples, timestamps and scan metadata.
+Baseline subtraction and integration are not applied to this export.
 
 The scope excludes undershoot correction, deconvolution and pulse-tail recovery.
-Raw data and generated results stay outside Git. references.json pins upstream
-sources. Nine unit tests cover decoding, observables, timing checks and export.
-The optional `tests/root_smoke.py OUTPUT APC_CHECKOUT` checks fitting with
-synthetic charges. On CERN ROOT 6.38.00 it recovered separation 99.69 for an
-injected 100; this is a software check, not a detector measurement.
+Raw data and generated results stay outside Git. Nine unit tests cover decoding,
+observables, scan receipts, timing checks and export.
+The optional `tests/root_smoke.py OUTPUT` checks fitting with
+synthetic charges. It uses synthetic charges with known separation; this is a software check,
+not a detector measurement.
